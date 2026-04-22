@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whack-a-Mole</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #2e7d32;
+      color: white;
+    }
+    .game-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .score-board {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      background: #5d4037;
+      padding: 20px;
+      border-radius: 20px;
+    }
+    .hole {
+      background: #3e2723;
+      border-radius: 50%;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+    .hole.active {
+      background: #5d4037;
+      transform: scale(0.95);
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #ff9800;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f57c00;
+    }
+    .timer {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container">
+  <h1>Whack-a-Mole! 🐭</h1>
+  <div class="score-board">Score: <span id="score">0</span></div>
+  <div class="timer">Time: <span id="timer">30</span>s</div>
+  <div class="grid" id="grid"></div>
+  <button id="startBtn">Start Game</button>
+</div>
+
+<script>
+  const GRID_SIZE = 9; // 3x3
+  let score = 0;
+  let timeLeft = 30;
+  let gameActive = false;
+  let moleInterval = null;
+  let timerInterval = null;
+  let currentMoleIndex = null;
+
+  const grid = document.getElementById('grid');
+  const scoreSpan = document.getElementById('score');
+  const timerSpan = document.getElementById('timer');
+  const startBtn = document.getElementById('startBtn');
+
+  // Create holes
+  function createGrid() {
+    grid.innerHTML = '';
+    for (let i = 0; i < GRID_SIZE; i++) {
+      const hole = document.createElement('div');
+      hole.classList.add('hole');
+      hole.textContent = '🕳️';
+      hole.dataset.index = i;
+      hole.addEventListener('click', () => whack(i));
+      grid.appendChild(hole);
+    }
+  }
+
+  // Remove mole from current hole
+  function removeMole() {
+    if (currentMoleIndex !== null) {
+      const prevHole = grid.children[currentMoleIndex];
+      if (prevHole) prevHole.textContent = '🕳️';
+      prevHole.classList.remove('active');
+      currentMoleIndex = null;
+    }
+  }
+
+  // Show mole in random hole
+  function showMole() {
+    if (!gameActive) return;
+    
+    removeMole();
+    
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * GRID_SIZE);
+    } while (newIndex === currentMoleIndex && GRID_SIZE > 1);
+    
+    const hole = grid.children[newIndex];
+    hole.textContent = '🐭';
+    hole.classList.add('active');
+    currentMoleIndex = newIndex;
+    
+    // Mole disappears after 0.8 seconds if not whacked
+    setTimeout(() => {
+      if (gameActive && currentMoleIndex === newIndex) {
+        removeMole();
+      }
+    }, 800);
+  }
+
+  // Whack the mole
+  function whack(index) {
+    if (!gameActive) return;
+    if (index === currentMoleIndex) {
+      score++;
+      scoreSpan.textContent = score;
+      removeMole();
+      // Optional: add hit effect
+      const hitHole = grid.children[index];
+      hitHole.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        if (hitHole) hitHole.style.transform = '';
+      }, 100);
+    }
+  }
+
+  // End game
+  function endGame() {
+    gameActive = false;
+    if (moleInterval) clearInterval(moleInterval);
+    if (timerInterval) clearInterval(timerInterval);
+    removeMole();
+    alert(`Game Over! Your score: ${score}`);
+  }
+
+  // Start game
+  function startGame() {
+    if (gameActive) return;
+    
+    // Reset game state
+    gameActive = true;
+    score = 0;
+    timeLeft = 30;
+    scoreSpan.textContent = score;
+    timerSpan.textContent = timeLeft;
+    removeMole();
+    
+    // Clear any existing intervals
+    if (moleInterval) clearInterval(moleInterval);
+    if (timerInterval) clearInterval(timerInterval);
+    
+    // Start mole interval (every 0.9 seconds)
+    moleInterval = setInterval(() => {
+      if (gameActive) showMole();
+    }, 900);
+    
+    // Start timer countdown
+    timerInterval = setInterval(() => {
+      if (!gameActive) return;
+      timeLeft--;
+      timerSpan.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        endGame();
+      }
+    }, 1000);
+  }
+
+  startBtn.addEventListener('click', startGame);
+  createGrid();
+</script>
+</body>
+</html>

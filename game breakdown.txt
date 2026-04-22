@@ -1,0 +1,9 @@
+display 6 boxes as a cube ..... done
+
+add a timer(30 secs)
+
+add a start game button(starts the timer)
+
+make a random box change color to blue for .6 seconds
+
+when blue box is clicked, it adds to the score
